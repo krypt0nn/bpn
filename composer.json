@@ -1,0 +1,23 @@
+{
+    "name": "krypt0nn/bpn",
+    "description": "library that allows you to create decentralized networks",
+    "keywords": ["decentralized", "network"],
+    "version": "1.0.0",
+    "homepage": "https://github.com/KRypt0nn/bpn",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Nikita Podvirnyy",
+            "email": "suimin.tu.mu.ga.mi@gmail.com",
+            "homepage": "https://github.com/KRypt0nn",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "mdanter/ecc": "^1.0",
+        "php": ">=8.0.0"
+    },
+    "autoload": {
+        "files": ["bpn.php"]
+    }
+}
