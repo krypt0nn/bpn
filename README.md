@@ -1,6 +1,15 @@
 <p align="center"><img src="bpn.png" width="384px"></p>
 
-**🚀 BPN** is a huge library which allows you to create your own decentralized network on PHP 8+
+<p align="center">
+    <img src="http://poser.pugx.org/krypt0nn/bpn/v">
+    <img src="http://poser.pugx.org/krypt0nn/bpn/downloads">
+    <img src="http://poser.pugx.org/krypt0nn/bpn/license">
+</p>
+
+<p align="center">
+    🚀 <b>BPN</b> is a huge library which allows you to create your own decentralized network on PHP 8+ <br>
+    and provides various communication tools
+</p>
 
 ## Installation
 
@@ -47,7 +56,6 @@ require 'vendor/autoload.php';
 use BPN\BPN;
 use BPN\Networking\Endpoint;
 use BPN\Encoding\ECC;
-use BPN\Data\Packet;
 
 $keypair = ECC::generateKeyPair();
 
