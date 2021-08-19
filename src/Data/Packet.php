@@ -13,6 +13,7 @@ class Packet
     /**
      * Packets types
      */
+    public const DEFAULT              = 0; // Default packets
     public const INTRODUCING          = 1; // Ask another client to add you to his DNS
     public const DNS_SHARING_REQUEST  = 2; // Ask ... to get his DNS records that is different from yours
     public const DNS_SHARING_RESPONSE = 3; // Receive ... response about different records

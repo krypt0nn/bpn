@@ -2,7 +2,12 @@
 
 namespace BPN\Networking\DNS;
 
-use BPN\Data\Client;
+use BPN\BPN;
+
+use BPN\Data\{
+    Client,
+    Packet
+};
 
 /**
  * DNS library
@@ -117,5 +122,24 @@ class DNS
         foreach ($records as $record)
             if ($record instanceof Record)
                 self::$records[] = $record;
+    }
+
+    /**
+     * Initiate DNS SHARING
+     * 
+     * [@param Endpoint $endpoint = null] - endpoint to share records with
+     * By default shares records with every client in DNS
+     * 
+     * @return void
+     */
+    public static function shareRecords (Endpoint $endpoint = null): void
+    {
+        $bpn = BPN::get();
+
+        if ($endpoint !== null)
+            $bpn->send ($endpoint, Packet::new (self::$records, Packet::DNS_SHARING_REQUEST));
+
+        else foreach (self::$records as $record)
+            $bpn->send ($record->endpoint(), Packet::new (self::$records, Packet::DNS_SHARING_REQUEST));
     }
 }

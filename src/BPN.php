@@ -180,11 +180,17 @@ class BPN
 
                                 break;
 
+                            /**
+                             * Perform registered event
+                             */
                             case Packet::PERFORM_EVENT:
                                 BPN::perform ($packet->data['name'], $packet);
 
                                 break;
 
+                            /**
+                             * Default packet (type = 0)
+                             */
                             default:
                                 if ($defaultCallback !== null)
                                     $defaultCallback ($packet);
