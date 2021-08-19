@@ -1,9 +1,9 @@
 <p align="center"><img src="bpn.png" width="384px"></p>
 
 <p align="center">
-    <img src="http://poser.pugx.org/krypt0nn/bpn/v">
-    <img src="http://poser.pugx.org/krypt0nn/bpn/downloads">
-    <img src="http://poser.pugx.org/krypt0nn/bpn/license">
+    <a href="https://packagist.org/packages/krypt0nn/bpn"><img src="http://poser.pugx.org/krypt0nn/bpn/v"></a>
+    <a href="https://packagist.org/packages/krypt0nn/bpn"><img src="http://poser.pugx.org/krypt0nn/bpn/downloads"></a>
+    <a href="/LICENSE"><img src="http://poser.pugx.org/krypt0nn/bpn/license"></a>
 </p>
 
 <p align="center">
