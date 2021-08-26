@@ -2,7 +2,7 @@
 
 namespace BPN\Networking;
 
-use BPN\Networking\DNS\DNS;
+use BPN\Networking\DNS;
 
 /**
  * Remote endpoint

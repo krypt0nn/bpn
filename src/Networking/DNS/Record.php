@@ -40,6 +40,33 @@ class Record
         return new self (...$args);
     }
 
+    /**
+     * Convert record to string
+     * 
+     * @return string
+     */
+    public function toString (): string
+    {
+        return $this->endpoint->toString() .'#'. $this->client->public();
+    }
+
+    /**
+     * Get record from string
+     * 
+     * @param string $record
+     * 
+     * @return Record
+     */
+    public static function fromString (string $record): Record
+    {
+        $break = strpos ($record, '#');
+
+        $endpoint = Endpoint::format (substr ($record, 0, $break));
+        $client   = Client::new (substr ($record, $break + 1));
+
+        return new self ($client, $endpoint);
+    }
+
     public function client (): Client
     {
         return $this->client;
@@ -58,6 +85,18 @@ class Record
     public function record (): array
     {
         return [$this->client, $this->endpoint];
+    }
+
+    /**
+     * Get record's uri (endpoint@uuid)
+     * 
+     * Can be used to get the record from DNS
+     * 
+     * @return string
+     */
+    public function uri (): string
+    {
+        return $this->endpoint->toString() .'@'. $this->client->uuid();
     }
 
     /**

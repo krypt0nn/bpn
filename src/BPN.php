@@ -2,7 +2,6 @@
 
 namespace BPN;
 
-use BPN\Networking\Endpoint;
 use BPN\Encoding\ECC;
 
 use BPN\Data\{
@@ -10,10 +9,12 @@ use BPN\Data\{
     Client
 };
 
-use BPN\Networking\DNS\{
-    DNS,
-    Record
+use BPN\Networking\{
+    Endpoint,
+    DNS
 };
+
+use BPN\Networking\DNS\Record;
 
 /**
  * BPN core class
@@ -41,6 +42,7 @@ class BPN
     public static $socket = null;
     public static array $streams = [];
     public static array $events = [];
+    public static array $search = [];
 
     public static function get ()
     {
@@ -129,8 +131,7 @@ class BPN
                                 $diff_dns = DNS::where (function (Record $record) use ($shared_records)
                                 {
                                     foreach ($shared_records as $shared_record)
-                                        if ($record->endpoint()->toString() == $shared_record->endpoint()->toString() &&
-                                            $record->client()->uuid() == $shared_record->client()->uuid())
+                                        if ($record->uri() == $shared_record->uri())
                                                 return false;
 
                                     return true;
@@ -141,8 +142,7 @@ class BPN
                                     $addRecord = true;
 
                                     foreach (DNS::getRecords () as $record)
-                                        if ($record->endpoint()->toString() == $shared_record->endpoint()->toString() &&
-                                            $record->client()->uuid() == $shared_record->client()->uuid())
+                                        if ($record->uri() == $shared_record->uri())
                                         {
                                             $addRecord = false;
 
@@ -166,8 +166,7 @@ class BPN
                                     $addRecord = true;
 
                                     foreach (DNS::getRecords () as $record)
-                                        if ($record->endpoint()->toString() == $shared_record->endpoint()->toString() &&
-                                            $record->client()->uuid() == $shared_record->client()->uuid())
+                                        if ($record->uri() == $shared_record->uri())
                                         {
                                             $addRecord = false;
 
@@ -177,6 +176,54 @@ class BPN
                                     if ($addRecord)
                                         DNS::addRecord ($shared_record);
                                 }
+
+                                break;
+
+                            /**
+                             * DNS Search request
+                             */
+                            case Packet::DNS_SEARCH_REQUEST:
+                                $ttl = min (ord ($packet->data[0]), 36) - 1;
+
+                                if ($ttl > -1)
+                                {
+                                    $delimiter1 = strpos ($packet->data, '/');
+                                    $uuid = substr ($packet->data, 1, $delimiter1 - 1);
+
+                                    $delimiter2 = strpos ($packet->data, '/', $delimiter1 + 1);
+                                    $backtrace = substr ($packet->data, $delimiter1 + 1, $delimiter2 - $delimiter1 - 1);
+                                    $backtrace = Endpoint::format ($backtrace);
+
+                                    $blacklist = explode (',', substr ($packet->data, $delimiter2 + 1));
+                                    $blacklist[] = $packet->author_endpoint->toString();
+
+                                    $records = DNS::where (fn ($record) => !in_array ($record->endpoint()->toString(), $blacklist));
+                                    $new_packet = chr ($ttl) . $uuid . '/' . implode (',', $blacklist);
+
+                                    foreach ($records as $record)
+                                    {
+                                        // we shouldn't stop here because this client
+                                        // may have another endpoint saved in someone's DNS
+                                        // and our record can be incorrect
+                                        if ($record->client()->uuid() == $uuid)
+                                            BPN::get()->send ($backtrace, Packet::new ($record->toString(), Packet::DNS_SEARCH_RESPONSE));
+
+                                        if ($ttl > 0)
+                                            BPN::get()->send ($record->endpoint(), Packet::new ($new_packet, Packet::DNS_SEARCH_REQUEST));
+                                    }
+                                }
+
+                                break;
+
+                            /**
+                             * DNS Search response
+                             */
+                            case Packet::DNS_SEARCH_RESPONSE:
+                                $record = Record::fromString ($packet->data);
+
+                                if (isset (self::$search[$uuid = $record->client()->uuid()]))
+                                    if (self::$search[$uuid] ($record, $packet) === false)
+                                        unset (self::$search[$uuid]);
 
                                 break;
 

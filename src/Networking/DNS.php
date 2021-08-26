@@ -1,6 +1,6 @@
 <?php
 
-namespace BPN\Networking\DNS;
+namespace BPN\Networking;
 
 use BPN\BPN;
 
@@ -51,6 +51,22 @@ class DNS
         {
             return $record->client()->uuid() == $uuid;
         });
+    }
+
+    /**
+     * Get record by URI (endpoint@uuid)
+     * 
+     * @param string $uri
+     * 
+     * @return Record|null
+     */
+    public static function getRecordByUri (string $uri): ?Record
+    {
+        foreach (self::$records as $record)
+            if ($record->uri() == $uri)
+                return $record;
+
+        return null;
     }
 
     /**
@@ -141,5 +157,33 @@ class DNS
 
         else foreach (self::$records as $record)
             $bpn->send ($record->endpoint(), Packet::new (self::$records, Packet::DNS_SHARING_REQUEST));
+    }
+
+    /**
+     * Initiate DNS SEARCH
+     * 
+     * @param string $uuid - uuid of client which record you want to search
+     * 
+     * @param callable $callback - callback which will be called when record was found
+     * format: function (Record $record, Packet $packet): bool
+     * If this callback returns false (bool), then it will be removed
+     * and any other DNS SEARCH RESPONSE will be ignored
+     * 
+     * [@param int $ttl = 8] - number of clients this packet will work
+     * [@param Endpoint $endpoint = null] - endpoint that will receive DNS Search responses
+     * 
+     * @return void
+     */
+    public static function searchRecords (string $uuid, callable $callback, int $ttl = 8, Endpoint $backtrace = null): void
+    {
+        BPN::$search[$uuid] = $callback;
+        
+        $backtrace ??= BPN::$external_endpoint;
+
+        $bpn = BPN::get();
+        $packet = chr (max (1, min ($ttl, 36))) . $uuid . '/' . $backtrace->toString() .'/';
+
+        foreach (self::$records as $record)
+            $bpn->send ($record->endpoint(), Packet::new ($packet, Packet::DNS_SEARCH_REQUEST));
     }
 }

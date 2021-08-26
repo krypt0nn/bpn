@@ -1,9 +1,9 @@
 <p align="center"><img src="bpn.png" width="384px"></p>
 
 <p align="center">
-    <img src="http://poser.pugx.org/krypt0nn/bpn/v">
-    <img src="http://poser.pugx.org/krypt0nn/bpn/downloads">
-    <img src="http://poser.pugx.org/krypt0nn/bpn/license">
+    <img src="https://poser.pugx.org/krypt0nn/bpn/v">
+    <img src="https://poser.pugx.org/krypt0nn/bpn/downloads">
+    <img src="https://poser.pugx.org/krypt0nn/bpn/license">
 </p>
 
 <p align="center">
@@ -131,7 +131,29 @@ while (true)
         echo $data . PHP_EOL;
     });
 }
+```
 
+### Search client through BPN network by his UUID
+
+```php
+<?php
+
+require 'vendor/autoload.php';
+
+use BPN\Networking\DNS;
+use BPN\Networking\DNS\Record;
+use BPN\Data\Packet;
+
+DNS::searchRecords ('client uuid', function (Record $record, Packet $packet)
+{
+    echo 'Client with endpoint '. $packet->author_endpoint->toString() .
+         ' found client we wanted to find'.
+         ' and his endpoint is '. $record->endpoint()->toString() . PHP_EOL;
+
+    // if you want to not to receive another records
+    // you can return false from this callback
+    // return false;
+});
 ```
 
 ## Documentation

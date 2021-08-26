@@ -2,8 +2,12 @@
 
 namespace BPN\Data;
 
-use BPN\Networking\Endpoint;
-use BPN\Networking\DNS\DNS;
+use BPN\Networking\{
+    Endpoint,
+    DNS
+};
+
+use BPN\Networking\DNS\Record;
 
 /**
  * Representation of a some data
@@ -13,11 +17,21 @@ class Packet
     /**
      * Packets types
      */
-    public const DEFAULT              = 0; // Default packets
-    public const INTRODUCING          = 1; // Ask another client to add you to his DNS
-    public const DNS_SHARING_REQUEST  = 2; // Ask ... to get his DNS records that is different from yours
-    public const DNS_SHARING_RESPONSE = 3; // Receive ... response about different records
-    public const PERFORM_EVENT        = 4; // Send ... request to perform an event
+    public const DEFAULT       = 0; // Default packets
+    public const INTRODUCING   = 1; // Ask another client to add you to his DNS
+    public const PERFORM_EVENT = 2; // Send ... request to perform an event
+
+    /**
+     * DNS SHARING
+     */
+    public const DNS_SHARING_REQUEST  = 3; // Ask ... to get his DNS records that is different from yours
+    public const DNS_SHARING_RESPONSE = 4; // Receive ... response about different records
+
+    /**
+     * DNS SEARCH
+     */
+    public const DNS_SEARCH_REQUEST  = 5; // Ask ... about another client record by his uuid
+    public const DNS_SEARCH_RESPONSE = 6; // Receive ... response about this client
 
     public int $type = 0;
     public $data = null;
@@ -156,36 +170,36 @@ class Packet
     /**
      * Try to find packet's author in local DNS
      * 
-     * @return Client|null
+     * @return Record|null
      */
-    public function author (): ?Client
+    public function author (): ?Record
     {
         if ($this->author_endpoint === null)
         {
             if ($this->author_uuid === null)
                 return null;
 
-            $clients = DNS::getClientsByUUID ($this->author_uuid);
+            $records = DNS::getRecordsByUUID ($this->author_uuid);
 
-            if (sizeof ($clients) == 1)
-                return current ($clients);
+            if (sizeof ($records) == 1)
+                return current ($records);
 
             return null;
         }
 
         else
         {
-            $clients = DNS::getClientsByEndpoint ($this->author_endpoint);
+            $records = DNS::getRecordsByEndpoint ($this->author_endpoint);
 
-            if (sizeof ($clients) == 0)
+            if (sizeof ($records) == 0)
                 return null;
 
-            if ($this->author_uuid === null || sizeof ($clients) == 1)
-                return current ($clients);
+            if ($this->author_uuid === null || sizeof ($records) == 1)
+                return current ($records);
 
-            foreach ($clients as $client)
-                if ($client->uuid() == $this->author_uuid)
-                    return $client;
+            foreach ($records as $record)
+                if ($record->client()->uuid() == $this->author_uuid)
+                    return $record;
 
             return null;
         }
