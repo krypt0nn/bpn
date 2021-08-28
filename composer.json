@@ -2,7 +2,7 @@
     "name": "krypt0nn/bpn",
     "description": "library that allows you to create decentralized networks",
     "keywords": ["decentralized", "network"],
-    "version": "1.1.0",
+    "version": "1.2.0",
     "homepage": "https://github.com/KRypt0nn/bpn",
     "license": "GPL-3.0-or-later",
     "authors": [

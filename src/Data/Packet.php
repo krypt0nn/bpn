@@ -23,15 +23,28 @@ class Packet
 
     /**
      * DNS SHARING
+     * 
+     * This packets realizing DNS sharing protocol
+     * This protocol is sharing known DNS records between clients
      */
     public const DNS_SHARING_REQUEST  = 3; // Ask ... to get his DNS records that is different from yours
     public const DNS_SHARING_RESPONSE = 4; // Receive ... response about different records
 
     /**
      * DNS SEARCH
+     * 
+     * This packets realizing protocol of searching
+     * the clients with some UUID in the BPN network
      */
     public const DNS_SEARCH_REQUEST  = 5; // Ask ... about another client record by his uuid
     public const DNS_SEARCH_RESPONSE = 6; // Receive ... response about this client
+
+    /**
+     * BROADCAST
+     * 
+     * This packet will be shared between all reachable BPN clients
+     */
+    public const BROADCAST = 7;
 
     public int $type = 0;
     public $data = null;

@@ -40,6 +40,7 @@ class BPN
     public static int $last_streams_cleanup = 0;
 
     public static $socket = null;
+    public static $broadcast = null;
     public static array $streams = [];
     public static array $events = [];
     public static array $search = [];
@@ -198,6 +199,12 @@ class BPN
                                     $blacklist[] = $packet->author_endpoint->toString();
 
                                     $records = DNS::where (fn ($record) => !in_array ($record->endpoint()->toString(), $blacklist));
+
+                                    $blacklist = array_unique (array_merge ($blacklist, array_map (function ($record)
+                                    {
+                                        return $record->endpoint()->toString();
+                                    }, $records)));
+
                                     $new_packet = chr ($ttl) . $uuid . '/' . implode (',', $blacklist);
 
                                     foreach ($records as $record)
@@ -206,10 +213,10 @@ class BPN
                                         // may have another endpoint saved in someone's DNS
                                         // and our record can be incorrect
                                         if ($record->client()->uuid() == $uuid)
-                                            BPN::get()->send ($backtrace, Packet::new ($record->toString(), Packet::DNS_SEARCH_RESPONSE));
+                                            $this->send ($backtrace, Packet::new ($record->toString(), Packet::DNS_SEARCH_RESPONSE));
 
                                         if ($ttl > 0)
-                                            BPN::get()->send ($record->endpoint(), Packet::new ($new_packet, Packet::DNS_SEARCH_REQUEST));
+                                            $this->send ($record->endpoint(), Packet::new ($new_packet, Packet::DNS_SEARCH_REQUEST));
                                     }
                                 }
 
@@ -224,6 +231,40 @@ class BPN
                                 if (isset (self::$search[$uuid = $record->client()->uuid()]))
                                     if (self::$search[$uuid] ($record, $packet) === false)
                                         unset (self::$search[$uuid]);
+
+                                break;
+
+                            /**
+                             * Receive and share broadcast packet
+                             */
+                            case Packet::BROADCAST:
+                                $ttl = min (ord ($packet->data[0]), 36) - 1;
+
+                                if ($ttl > -1)
+                                {
+                                    $delimiter = strpos ($packet->data, '/');
+
+                                    $blacklist = explode (',', substr ($packet->data, 1, $delimiter - 1));
+                                    $blacklist[] = $packet->author_endpoint->toString();
+
+                                    $records = DNS::where (fn ($record) => !in_array ($record->endpoint()->toString(), $blacklist));
+
+                                    $blacklist = array_unique (array_merge ($blacklist, array_map (function ($record)
+                                    {
+                                        return $record->endpoint()->toString();
+                                    }, $records)));
+
+                                    $data = substr ($packet->data, $delimiter + 1);
+
+                                    if (is_callable (self::$broadcast))
+                                        self::$broadcast (unserialize ($data), $packet);
+
+                                    $new_packet = Packet::new (chr ($ttl) . implode (',', $blacklist) .'/'. $data, Packet::BROADCAST);
+
+                                    if ($ttl > 0)
+                                        foreach ($records as $record)
+                                            $this->send ($record->endpoint(), $new_packet);
+                                }
 
                                 break;
 
@@ -273,6 +314,20 @@ class BPN
                 return $this;
             }
 
+            public function broadcast ($data, int $ttl = 8): self
+            {
+                $packet = chr (max (1, min ($ttl, 36))) .
+                    implode (',', array_unique (array_map (fn ($record) => $record->endpoint()->toString(), DNS::getRecords()))) .'/'.
+                    serialize ($data);
+
+                $packet = Packet::new ($packet, Packet::BROADCAST);
+
+                foreach (DNS::getRecords() as $record)
+                    $this->send ($record->endpoint(), $packet);
+
+                return $this;
+            }
+
             public function cleanStreams (): self
             {
                 $current = time ();
@@ -300,6 +355,11 @@ class BPN
             unset (self::$events[$name]);
 
         else self::$events[$name] = $callback;
+    }
+
+    public static function onBroadcast (callable $callback = null): void
+    {
+        self::$broadcast = $callback;
     }
 
     public static function perform (string $name, Packet $packet): void

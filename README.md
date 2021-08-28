@@ -140,9 +140,17 @@ while (true)
 
 require 'vendor/autoload.php';
 
+use BPN\BPN;
 use BPN\Networking\DNS;
 use BPN\Networking\DNS\Record;
 use BPN\Data\Packet;
+
+$keypair = ECC::generateKeyPair();
+
+BPN::configure ([
+    'public_key'  => $keypair['public'],
+    'private_key' => $keypair['private']
+]);
 
 DNS::searchRecords ('client uuid', function (Record $record, Packet $packet)
 {
@@ -154,6 +162,33 @@ DNS::searchRecords ('client uuid', function (Record $record, Packet $packet)
     // you can return false from this callback
     // return false;
 });
+```
+
+### Broadcast data
+
+```php
+<?php
+
+use BPN\BPN;
+
+$keypair = ECC::generateKeyPair();
+
+BPN::configure ([
+    'public_key'  => $keypair['public'],
+    'private_key' => $keypair['private']
+]);
+
+# Add broadcast handler for incoming data
+BPN::onBroadcast(function ($data)
+{
+    echo '['. $data['author'] .'] '. $data['message'] . PHP_EOL;
+});
+
+# Broadcast data
+BPN::broadcast ([
+    'author'  => 'aboba',
+    'message' => 'Hello, World!'
+]);
 ```
 
 ## Documentation

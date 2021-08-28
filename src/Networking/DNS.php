@@ -181,7 +181,11 @@ class DNS
         $backtrace ??= BPN::$external_endpoint;
 
         $bpn = BPN::get();
-        $packet = chr (max (1, min ($ttl, 36))) . $uuid . '/' . $backtrace->toString() .'/';
+
+        $packet = chr (max (1, min ($ttl, 36))) .
+            $uuid .'/'.
+            $backtrace->toString() .'/'.
+            implode (',', array_unique (array_map (fn ($record) => $record->endpoint()->toString(), self::$records)));
 
         foreach (self::$records as $record)
             $bpn->send ($record->endpoint(), Packet::new ($packet, Packet::DNS_SEARCH_REQUEST));
